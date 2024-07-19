@@ -1,2 +1,2 @@
 # DevopsInfra
-Test Малой лох
+Test
