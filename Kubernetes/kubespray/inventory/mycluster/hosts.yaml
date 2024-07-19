@@ -1,0 +1,57 @@
+all:
+  hosts:
+    k8-node-white-master-1:
+      ansible_host: 10.1.100.131
+      ip: 10.1.100.131
+      access_ip: 10.1.100.131
+    k8-node-white-master-2:
+      ansible_host: 10.1.100.132
+      ip: 10.1.100.132
+      access_ip: 10.1.100.132
+    k8-node-white-master-3:
+      ansible_host: 10.1.100.133
+      ip: 10.1.100.133
+      access_ip: 10.1.100.133
+    k8-node-white-worker-1:
+      ansible_host: 10.1.100.141
+      ip: 10.1.100.141
+      access_ip: 10.1.100.141
+    k8-node-white-worker-2:
+      ansible_host: 10.1.100.142
+      ip: 10.1.100.142
+      access_ip: 10.1.100.142
+    k8-node-white-worker-3:
+      ansible_host: 10.1.100.143
+      ip: 10.1.100.143
+      access_ip: 10.1.100.143
+    k8-node-white-worker-4-state:
+      ansible_host: 10.1.100.144
+      ip: 10.1.100.144
+      access_ip: 10.1.100.144
+
+  children:
+    kube_control_plane:
+      hosts:
+        k8-node-white-master-1:
+        k8-node-white-master-2:
+        k8-node-white-master-3:
+    kube_node:
+      hosts:
+        k8-node-white-master-1:
+        k8-node-white-master-2:
+        k8-node-white-master-3:
+        k8-node-white-worker-1:
+        k8-node-white-worker-2:
+        k8-node-white-worker-3:
+        k8-node-white-worker-4-state:
+    etcd:
+      hosts:
+        k8-node-white-master-1:
+        k8-node-white-master-2:
+        k8-node-white-master-3:
+    k8s_cluster:
+      children:
+        kube_control_plane:
+        kube_node:
+    calico_rr:
+      hosts: {}
