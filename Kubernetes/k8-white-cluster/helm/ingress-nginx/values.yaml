@@ -1,0 +1,52 @@
+controller:
+  ingressClass: nginx
+  replicaCount: 1
+  config:
+    worker-processes: '1'
+    #ssl-early-data: "true"
+    #ssl-protocols: TLSv1.1 TLSv1.2
+    #ssl-ciphers: HIGH:!aNULL:!eNULL:!EXPORT:!CAMELLIA:!DES:!MD5:!PSK:!RC4
+  extraVolumeMounts:
+    - name: egopay-ca-certificates
+      mountPath: "/etc/ssl/certs/egopay-ca-certificates.crt"
+      subPath: egopay-ca-certificates.crt
+  extraVolumes:
+    - name: egopay-ca-certificates
+      secret:
+        secretName: egopay-ca-certificates
+  resources:
+    limits:
+      cpu: 300m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 512Mi
+  stats:
+    enabled: true
+  metrics:
+    enabled: true
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "10254"
+  service:
+        enabled: true
+        annotations: {}
+        labels: {}
+        ipFamilies:
+            - IPv4
+        ports:
+            http: 80
+            https: 443
+        targetPorts:
+            http: http
+            https: https
+        # type: LoadBalancer
+        type: NodePort
+        nodePorts:
+          http: 32080
+          https: 32443
+          tcp:
+            8080: 32808
+serviceAccount:
+  create: true
+  name: ingress-nginx-sa

@@ -1,0 +1,13 @@
+helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
+helm show values kubernetes-dashboard/kubernetes-dashboard > values.yaml
+
+helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard --create-namespace --namespace kubernetes-dashboard --version 6.0.8
+
+kubectl apply -f service-account.yaml
+kubectl apply -f clusterrolebinging.yaml
+kubectl apply -f secret.yaml
+
+kubectl get secret admin-amd -n kube-system -o jsonpath={".data.token"} | base64 -d
+
+#create short token 
+kubectl -n kube-system create token admin-amd
