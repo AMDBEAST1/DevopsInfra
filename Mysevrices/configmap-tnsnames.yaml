@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tnsnames
+  namespace: egopay-stage
+data:
+  circus.conf: ''
+  tnsnames.ora: |
+    main =
+       (DESCRIPTION =
+         (ADDRESS = (PROTOCOL = TCP)(HOST = 10.1.10.199)(PORT = 1521))
+         (CONNECT_DATA =
+           (SERVICE_NAME = epaytest.egopay.ru)
+         )
+        )
+
+    refund =
+       (DESCRIPTION =
+          (ADDRESS = (PROTOCOL = TCP)(HOST = vv-edudb-01.sirena-travel.ru)(PORT = 1521))
+         (CONNECT_DATA =
+          (SERVER = DEDICATED)
+          (SERVICE_NAME = edu)
+         )
+       )

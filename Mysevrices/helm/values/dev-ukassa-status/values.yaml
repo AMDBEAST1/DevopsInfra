@@ -28,7 +28,7 @@ ingress:
   #    hosts:
   #      - chart-example.local
 configmaptns:
-  enabled: true
+  enabled: false
   data: 
     circus.conf: ''
     tnsnames.ora: |
