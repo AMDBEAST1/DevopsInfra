@@ -90,7 +90,7 @@ config:
         api_url: "https://api.telegram.org"
         send_resolved: true
         parse_mode: HTML
-        message: '🚨 Alertmanager 🚨\n--\n🔺 Alertname: {{ .GroupLabels.alertname}}\n🔺 Severity: {{ .CommonLabels.severity }}\n📌 {{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}\n  {{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}\n {{ .GroupLabels.SortedPairs.Values | join " " }}'
+        #message: '🚨 Alertmanager 🚨\n--\n🔺 Alertname: {{ .GroupLabels.alertname}}\n🔺 Severity: {{ .CommonLabels.severity }}\n📌  \n  {{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}\n {{ .GroupLabels.SortedPairs.Values | join " " }}'
         # message: |
         #   {{ define "__yucca_text_alert_list" }}{{ range . }}
         #   ---

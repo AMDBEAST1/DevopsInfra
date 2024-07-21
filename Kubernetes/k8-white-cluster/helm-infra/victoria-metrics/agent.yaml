@@ -33,13 +33,16 @@ extraArgs:
 
 config:
   global:
-    scrape_interval: 120s
+    scrape_interval: 300s
 
   # scrape self by default
   scrape_configs:
     - job_name: vmagent
       static_configs:
         - targets: ["localhost:8429"]
+    - job_name: k8-white-nginx
+      static_configs:
+        - targets: ["10.1.100.140:9100"]
 
       ## COPY from Prometheus helm chart https://github.com/helm/charts/blob/master/stable/prometheus/values.yaml
 
