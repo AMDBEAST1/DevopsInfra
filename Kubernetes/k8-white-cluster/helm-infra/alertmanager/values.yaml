@@ -7,11 +7,11 @@ extraArgs:
 
 resources:
    limits:
-     cpu: 120m
-     memory: 128Mi
+     cpu: 200m
+     memory: 200Mi
    requests:
-     cpu: 100m
-     memory: 100Mi
+     cpu: 190m
+     memory: 190Mi
 
 nodeSelector:
   node-role: state
@@ -23,7 +23,7 @@ persistence:
   size: 500Mi
 
 configmapReload:
-  enabled: true
+  enabled: false
 
 
 config:
@@ -90,30 +90,31 @@ config:
         api_url: "https://api.telegram.org"
         send_resolved: true
         parse_mode: HTML
-        message: |
-          {{ define "__yucca_text_alert_list" }}{{ range . }}
-          ---
-          🪪 <b>{{ .Labels.alertname }}</b>
-          {{- if .Annotations.summary }}
-          📝 {{ .Annotations.summary }}{{ end }}
-          {{- if .Annotations.description }}
-          📖 {{ .Annotations.description }}{{ end }}
-          🏷 Labels:
-          {{ range .Labels.SortedPairs }}  <i>{{ .Name }}</i>: <code>{{ .Value }}</code>
-          {{ end }}{{ end }}
-          🛠 <a href="https://monitoring.testnew.egopay.ru/grafana">Grafana</a> 💊 <a href="https://monitoring.testnew.egopay.ru/alertman">Alertman</a> 💊 <a href="https://monitoring.testnew.egopay.ru/vmalert">Vmalert</a> 🛠
-          {{ end }}
+        message: '🚨 Alertmanager 🚨\n--\n🔺 Alertname: {{ .GroupLabels.alertname}}\n🔺 Severity: {{ .CommonLabels.severity }}\n📌 {{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}\n  {{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}\n {{ .GroupLabels.SortedPairs.Values | join " " }}'
+        # message: |
+        #   {{ define "__yucca_text_alert_list" }}{{ range . }}
+        #   ---
+        #   🪪 <b>{{ .Labels.alertname }}</b>
+        #   {{- if .Annotations.summary }}
+        #   📝 {{ .Annotations.summary }}{{ end }}
+        #   {{- if .Annotations.description }}
+        #   📖 {{ .Annotations.description }}{{ end }}
+        #   🏷 Labels:
+        #   {{ range .Labels.SortedPairs }}  <i>{{ .Name }}</i>: <code>{{ .Value }}</code>
+        #   {{ end }}{{ end }}
+        #   🛠 <a href="https://monitoring.testnew.egopay.ru/grafana">Grafana</a> 💊 <a href="https://monitoring.testnew.egopay.ru/alertman">Alertman</a> 💊 <a href="https://monitoring.testnew.egopay.ru/vmalert">Vmalert</a> 🛠
+        #   {{ end }}
       
-          {{ define "telegram.yucca.message" }}
-          {{ if gt (len .Alerts.Firing) 0 }}
-          🔥 Alerts Firing 🔥
-          {{ template "__yucca_text_alert_list" .Alerts.Firing }}
-          {{ end }}
-          {{ if gt (len .Alerts.Resolved) 0 }}
-          ✅ Alerts Resolved ✅
-          {{ template "__yucca_text_alert_list" .Alerts.Resolved }}
-          {{ end }}
-          {{ end }} 
+        #   {{ define "telegram.yucca.message" }}
+        #   {{ if gt (len .Alerts.Firing) 0 }}
+        #   🔥 Alerts Firing 🔥
+        #   {{ template "__yucca_text_alert_list" .Alerts.Firing }}
+        #   {{ end }}
+        #   {{ if gt (len .Alerts.Resolved) 0 }}
+        #   ✅ Alerts Resolved ✅
+        #   {{ template "__yucca_text_alert_list" .Alerts.Resolved }}
+        #   {{ end }}
+        #   {{ end }} 
 
 
   inhibit_rules:

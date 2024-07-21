@@ -12,17 +12,17 @@ deployment:
    #  maxSurge: 25%
    #  maxUnavailable: 25%
    # type: RollingUpdate
-extraVolumeMounts:
-  - name: egopay-ca-certificates
-    mountPath: "/etc/ssl/certs/egopay-ca-certificates.crt"
-    subPath: egopay-ca-certificates.crt
-extraVolumes:
-  - name: egopay-ca-certificates
-    secret:
-      secretName: egopay-ca-certificates
+# extraVolumeMounts:
+#   - name: egopay-ca-certificates
+#     mountPath: "/etc/ssl/certs/egopay-ca-certificates.crt"
+#     subPath: egopay-ca-certificates.crt
+# extraVolumes:
+#   - name: egopay-ca-certificates
+#     secret:
+#       secretName: egopay-ca-certificates
 
 extraArgs:
-  remoteWrite.tlsCAFile: "/etc/ssl/certs/egopay-ca-certificates.crt"
+  #remoteWrite.tlsCAFile: "/etc/ssl/certs/egopay-ca-certificates.crt"
   remoteWrite.label: 'cluster=k8-white'
   envflag.enable: "true"
   envflag.prefix: VM_

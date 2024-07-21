@@ -3,6 +3,11 @@ vmselect:
     envflag.enable: "true"
     envflag.prefix: VM_
     loggerFormat: json
+  #service:
+  podAnnotations: 
+    prometheus.io/path: /metrics
+    prometheus.io/port: "8481"
+    prometheus.io/scrape: 'true'
 
   horizontalPodAutoscaler:
     # -- Use HPA for vmselect component
@@ -41,6 +46,11 @@ vmselect:
 vminsert:
   # -- Enable deployment of vminsert component. Deployment is used
   enabled: true
+  #service:
+  podAnnotations: 
+    prometheus.io/path: /metrics
+    prometheus.io/port: "8480"
+    prometheus.io/scrape: 'true'
 
   extraArgs:
     envflag.enable: "true"
@@ -88,7 +98,11 @@ vmstorage:
     envflag.prefix: VM_
     loggerFormat: json
     retentionPeriod: 14d
-    
+  #service:
+  podAnnotations: 
+    prometheus.io/path: /metrics
+    prometheus.io/port: "8482"
+    prometheus.io/scrape: 'true'
   
   nodeSelector:
     node-role: state

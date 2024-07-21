@@ -1,0 +1,8 @@
+helm repo add bitnami https://charts.bitnami.com/bitnami
+
+helm repo update
+helm search repo bitnami/rabbitmq
+helm show values bitnami/rabbitmq > valuesfull.yaml
+helm upgrade rabbitmq bitnami/rabbitmq -f values.yaml -n egopay-stage --debug --install --version 14.6.1
+
+helm install my-rabbitmq bitnami/rabbitmq --version 14.6.1

@@ -1,0 +1,70 @@
+auth:
+  username: admin
+  password: "admin"
+
+clustering:
+  enabled: true
+nodeSelector:
+  node-role: state
+resources:
+   requests:
+     cpu: 2
+     memory: 512Mi
+   limits:
+     cpu: 3
+     memory: 1024Mi
+
+persistence:
+  ## @param persistence.enabled Enable RabbitMQ data persistence using PVC
+  ##
+  enabled: true
+  ## @param persistence.storageClass PVC Storage Class for RabbitMQ data volume
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+  ##   GKE, AWS & OpenStack)
+  ##
+  storageClass: ""
+  ## @param persistence.selector Selector to match an existing Persistent Volume
+  ## selector:
+  ##   matchLabels:
+  ##     app: my-app
+  ##
+  selector: {}
+  ## @param persistence.accessModes PVC Access Modes for RabbitMQ data volume
+  ##
+  accessModes:
+    - ReadWriteOnce
+  ## @param persistence.existingClaim Provide an existing PersistentVolumeClaims
+  ## The value is evaluated as a template
+  ## So, for example, the name can depend on .Release or .Chart
+  ##
+  existingClaim: ""
+  ## @param persistence.mountPath The path the volume will be mounted at
+  ## Note: useful when using custom RabbitMQ images
+  ##
+  mountPath: /opt/bitnami/rabbitmq/.rabbitmq/mnesia
+  ## @param persistence.subPath The subdirectory of the volume to mount to
+  ## Useful in dev environments and one PV for multiple services
+  ##
+  subPath: ""
+  ## @param persistence.size PVC Storage Request for RabbitMQ data volume
+  ## If you change this value, you might have to adjust `rabbitmq.diskFreeLimit` as well
+  ##
+  size: 10Gi
+  ## @param persistence.annotations Persistence annotations. Evaluated as a template
+  ## Example:
+  ## annotations:
+  ##   example.io/disk-volume-type: SSD
+  ##
+  annotations: {}
+  ## @param persistence.labels Persistence labels. Evaluated as a template
+  ## Example:
+  ## labels:
+  ##   app: my-app
+  labels: {}
+metrics:
+  ## @param metrics.enabled Enable exposing RabbitMQ metrics to be gathered by Prometheus
+  ##
+  enabled: true

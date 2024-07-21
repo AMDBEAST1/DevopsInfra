@@ -14,11 +14,16 @@ server:
   extraArgs:
     external.url: https://monitoring.testnew.egopay.ru/vmalert
 
+  podAnnotations: 
+    prometheus.io/path: /metrics
+    prometheus.io/port: "8880"
+    prometheus.io/scrape: 'true'
+
   datasource:
-    url: "http://vm-k8-white-victoria-metrics-cluster-vmselect:8481/select/0/prometheus"
+    url: "http://vm-cluster-victoria-metrics-cluster-vmselect:8481/select/0/prometheus"
   remote:
     write:
-      url: "http://vm-k8-white-victoria-metrics-cluster-vminsert:8480/insert/0/prometheus"
+      url: "http://vm-cluster-victoria-metrics-cluster-vminsert:8480/insert/0/prometheus"
   notifier:
     alertmanager:
       url: "http://alertman-k8-white-alertmanager:9093/alertman"
