@@ -1,0 +1,12 @@
+{{- if .Values.configmaptns.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tnsnames
+  labels:
+    {{- include "grpc.labels" . | nindent 4 }}
+data:
+{{- with .Values.configmaptns.data }}
+      {{- toYaml . | nindent 8 }}
+    {{- end }}
+{{- end }}

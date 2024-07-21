@@ -1,0 +1,6 @@
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+ 
+helm upgrade  myvmalert myvmalert -n monitoring -f values.yaml --install
+

@@ -1,0 +1,13 @@
+helm repo add vm https://victoriametrics.github.io/helm-charts/
+
+helm repo update
+helm search repo vm/
+helm show values vm/victoria-metrics-cluster > values.yaml
+helm upgrade vm-cluster vm/victoria-metrics-cluster -f values-cluster.yaml -n monitoring --debug --install --version 0.11.20
+
+
+
+
+helm upgrade vmstack vm/victoria-metrics-k8s-stack -f stack.yaml  --version 0.24.2  --install --namespace monitoring --debug
+
+helm upgrade vmagent vm/victoria-metrics-agent -f agent.yaml  --version 0.10.4  --install --namespace monitoring

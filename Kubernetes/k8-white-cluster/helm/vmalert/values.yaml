@@ -1,0 +1,47 @@
+alertmanager:
+    enabled: false
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+rbac:
+  create: false
+  pspEnabled: false
+server:
+  image:
+    repository: victoriametrics/vmalert
+    tag: "v1.96.0"
+    pullPolicy: IfNotPresent
+  extraArgs:
+    external.url: https://monitoring.testnew.egopay.ru/vmalert
+
+  datasource:
+    url: "http://vm-k8-white-victoria-metrics-cluster-vmselect:8481/select/0/prometheus"
+  remote:
+    write:
+      url: "http://vm-k8-white-victoria-metrics-cluster-vminsert:8480/insert/0/prometheus"
+  notifier:
+    alertmanager:
+      url: "http://alertman-k8-white-alertmanager:9093/alertman"
+  resources: 
+    limits:
+      cpu: 600m
+      memory: 600Mi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  ingress:
+    enabled: false
+  config:
+    alerts:
+      groups:
+      #не удалять
+      - name: KubestateExporter
+        rules:
+          - alert: KubernetesNodeReady
+            expr: 'kube_node_status_condition{condition="Ready",status="true"} == 0'
+            for: 10m
+            labels:
+              severity: critical
+            annotations:
+              summary: Kubernetes Node ready (instance {{ $labels.instance }})
+              description: "Node {{ $labels.node }} has been unready for a long time\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

@@ -1,0 +1,122 @@
+
+replicaCount: 1
+
+extraArgs:
+ web.external-url: https://monitoring.testnew.egopay.ru
+ web.route-prefix: "/alertman"
+
+resources:
+   limits:
+     cpu: 120m
+     memory: 128Mi
+   requests:
+     cpu: 100m
+     memory: 100Mi
+
+nodeSelector:
+  node-role: state
+
+persistence:
+  enabled: true
+  accessModes:
+    - ReadWriteOnce
+  size: 500Mi
+
+configmapReload:
+  enabled: true
+
+
+config:
+  global:
+    resolve_timeout: 1m 
+  route:
+    # The labels by which incoming alerts are grouped together. For example,
+    # multiple alerts coming in for cluster=A and alertname=LatencyHigh would
+    # be batched into a single group.
+    #
+    # To aggregate by all possible labels use '...' as the sole label name.
+    # This effectively disables aggregation entirely, passing through all
+    # alerts as-is. This is unlikely to be what you want, unless you have
+    # a very low alert volume or your upstream notification system performs
+    # its own grouping. Example: group_by: [...]
+    group_by: ['alertname', 'container','namespace']
+
+    # When a new group of alerts is created by an incoming alert, wait at
+    # least 'group_wait' to send the initial notification.
+    # This way ensures that you get multiple alerts for the same group that start
+    # firing shortly after another are batched together on the first
+    # notification.
+    group_wait: 60s
+
+    # When the first notification was sent, wait 'group_interval' to send a batch
+    # of new alerts that started firing for that group.
+    group_interval: 5m
+
+    # If an alert has successfully been sent, wait 'repeat_interval' to
+    # resend them.
+    repeat_interval: 5h
+
+    # A default receiver
+    receiver: team-devops
+
+    # All the above attributes are inherited by all child routes and can
+    # overwritten on each.
+
+    # The child route trees.
+    routes:
+      - matchers:
+          - cluster=~".*white.*"
+        receiver: team-devops
+        # The service has a sub-route for critical alerts, any alerts
+        # that do not match, i.e. severity != critical, fall-back to the
+        # parent node and are sent to 'team-devops'
+        routes:
+          - matchers:
+              - severity="critical"
+            receiver: team-devops
+          - matchers:
+              - severity="warning"
+            receiver: team-devops
+      
+      - matchers:
+          - type= "for-devops"
+        receiver: team-devops
+
+  receivers:
+    - name: team-devops
+      telegram_configs:
+      - chat_id: -1002236685110
+        bot_token: 7361749420:AAFcF6vQR9Y-1TTX-gm01Fkf6AobcXhB37c
+        api_url: "https://api.telegram.org"
+        send_resolved: true
+        parse_mode: HTML
+        message: |
+          {{ define "__yucca_text_alert_list" }}{{ range . }}
+          ---
+          🪪 <b>{{ .Labels.alertname }}</b>
+          {{- if .Annotations.summary }}
+          📝 {{ .Annotations.summary }}{{ end }}
+          {{- if .Annotations.description }}
+          📖 {{ .Annotations.description }}{{ end }}
+          🏷 Labels:
+          {{ range .Labels.SortedPairs }}  <i>{{ .Name }}</i>: <code>{{ .Value }}</code>
+          {{ end }}{{ end }}
+          🛠 <a href="https://monitoring.testnew.egopay.ru/grafana">Grafana</a> 💊 <a href="https://monitoring.testnew.egopay.ru/alertman">Alertman</a> 💊 <a href="https://monitoring.testnew.egopay.ru/vmalert">Vmalert</a> 🛠
+          {{ end }}
+      
+          {{ define "telegram.yucca.message" }}
+          {{ if gt (len .Alerts.Firing) 0 }}
+          🔥 Alerts Firing 🔥
+          {{ template "__yucca_text_alert_list" .Alerts.Firing }}
+          {{ end }}
+          {{ if gt (len .Alerts.Resolved) 0 }}
+          ✅ Alerts Resolved ✅
+          {{ template "__yucca_text_alert_list" .Alerts.Resolved }}
+          {{ end }}
+          {{ end }} 
+
+
+  inhibit_rules:
+    - source_matchers: [severity="critical"]
+      target_matchers: [severity="warning"]
+      equal: [alertname]

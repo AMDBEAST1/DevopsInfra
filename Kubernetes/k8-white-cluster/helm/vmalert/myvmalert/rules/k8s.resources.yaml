@@ -1,0 +1,116 @@
+groups:
+- name: kubernetes-absent
+  rules:
+  - alert: KubeAPIDown
+    annotations:
+      message: KubeAPI has disappeared from Prometheus target discovery.
+      dn: '{{ $labels.instance }}-{{ $labels.cluster }}'
+    expr: absent(up{job="apiserver"} == 1)
+    for: 1m
+    labels:
+      scope: public
+      severity: warning
+
+  - alert: KubeStateMetricsDown
+    annotations:
+      message: KubeStateMetrics has disappeared from Prometheus target discovery.
+      generatorUrl: https://wiki.ringcentral.com/x/hcMzEw
+      dn: '{{ $labels.instance }}-{{ $labels.cluster }}'
+    expr: absent(up{job="kube-state-metrics"} == 1)
+    for: 2m
+    labels:
+      scope: public
+      severity: warning
+
+  - alert: KubeletDown
+    annotations:
+      message: Kubelet has disappeared from Prometheus target discovery.
+      runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubeletdown
+      dn: '{{ $labels.cluster }}-{{ $labels.component }}'
+    expr: absent(up{job="kubelet"} == 1)
+    for: 2m
+    labels:
+      scope: internal
+      severity: warning
+
+  - alert: NodeExporterDown
+    annotations:
+      message: NodeExporter {{ $labels.node }} has disappeared from Prometheus target discovery.
+      dn: '{{ $labels.node }}-{{ $labels.cluster }}'
+      generatorUrl: https://wiki.ringcentral.com/x/3pykEg
+    expr: absent(up{job=~"node-exporter.*"} == 1)
+    for: 2m
+    labels:
+      scope: public
+      severity: warning
+
+
+- name: kubernetes-resources
+  rules:
+  - alert: CPUThrottlingHigh
+    annotations:
+      message: '{{ printf "%0.0f" $value }}% throttling of CPU in namespace {{
+        $labels.namespace }} for container {{ $labels.container }} in pod
+        {{ $labels.pod }} on {{ $labels.node }} {{ $labels.cluster }}.'
+      dn: '{{ $labels.namespace }}-{{ $labels.container }}-{{ $labels.pod }}-{{ $labels.cluster }}'
+      runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-cputhrottlinghigh
+    expr: |-
+      sum(increase(container_cpu_cfs_throttled_periods_total{container!="",namespace!="monitoring" }[5m])) by (container, pod, namespace,cluster)
+        /
+      sum(increase(container_cpu_cfs_periods_total{}[5m])) by (container, pod, namespace,cluster)
+        > ( 50 / 100 )
+    for: 30m
+    labels:
+      scope: internal
+      severity: warning
+
+
+- name: kubernetes-storage
+  rules:
+  - alert: KubePersistentVolumeUsageCritical
+    annotations:
+      message: The PersistentVolume claimed by {{ $labels.persistentvolumeclaim
+        }} in Namespace {{ $labels.namespace }} is only {{ printf "%0.2f" $value
+        }}% free.
+      runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubepersistentvolumeusagecritical
+      dn: '{{ $labels.namespace }}-{{ $labels.persistentvolumeclaim }}'
+    expr: |-
+      kubelet_volume_stats_available_bytes{job="kubelet"}
+        /
+      kubelet_volume_stats_capacity_bytes{job="kubelet"}
+        < 0.05
+    for: 5m
+    labels:
+      scope: internal
+      severity: warning
+  - alert: KubePersistentVolumeFullInFourDays
+    annotations:
+      message: Based on recent sampling, the PersistentVolume claimed by {{ $labels.persistentvolumeclaim
+        }} in Namespace {{ $labels.namespace }} is expected to fill up within
+        four days. Currently {{ printf "%0.2f" $value }}% is available.
+      runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubepersistentvolumefullinfourdays
+      dn: '{{ $labels.namespace }}-{{ $labels.persistentvolumeclaim }}'
+    expr: |-
+      100 * (
+        kubelet_volume_stats_available_bytes{job="kubelet"}
+          /
+        kubelet_volume_stats_capacity_bytes{job="kubelet"}
+      ) < 15
+      and
+      predict_linear(kubelet_volume_stats_available_bytes{job="kubelet"}[6h], 4 * 24 * 3600) < 0
+    for: 30m
+    labels:
+      scope: internal
+      severity: warning
+  - alert: KubePersistentVolumeErrors
+    annotations:
+      message: The persistent volume {{ $labels.persistentvolume }} has status
+        {{ $labels.phase }}.
+      runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubepersistentvolumeerrors
+      dn: '{{ $labels.namespace }}-{{ $labels.persistentvolume }}'
+    expr: kube_persistentvolume_status_phase{phase=~"Failed|Pending",job="kube-state-metrics"} > 0
+    for: 5m
+    labels:
+      scope: internal
+      severity: warning
+

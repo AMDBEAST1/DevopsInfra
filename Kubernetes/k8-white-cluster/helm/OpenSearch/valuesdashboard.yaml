@@ -1,0 +1,31 @@
+
+opensearchHosts: "https://opensearch-cluster-master:9200"
+resources:
+  requests:
+    cpu: "700m"
+    memory: "1000M"
+  limits:
+    cpu: "800m"
+    memory: "1100M"
+
+extraEnvs: 
+  - name: "SERVER_BASEPATH"
+    value: "/kibana"
+  - name: "SERVER_REWRITEBASEPATH"
+    value: "false"
+
+# config:
+#   opensearch_dashboards.yml: |
+#     server.basePath: "/kibana"
+#     server.rewriteBasePath: false
+#     server.host: "0.0.0.0"
+#     opensearch.hosts: ["http://opensearch-cluster-master:9200"]
+
+#server.host: "monitoring.testnew.egopay.ru"
+
+
+#     opensearch_dashboards.yml: |
+#      server:
+#        name: "opensearch"
+#        host: "https://monitoring.testnew.egopay.ru"
+

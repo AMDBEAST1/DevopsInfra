@@ -1,0 +1,20 @@
+groups:
+- name: k8s.hpa
+  interval: 3h
+  rules:
+    - alert: k8sHpaScalingAbility
+      expr: 'kube_horizontalpodautoscaler_status_condition{status="false", condition="AbleToScale",cluster=~"core.*"} == 1'
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: k8s HPA scaling ability (instance {{ $labels.horizontalpodautoscaler }})
+        description: "Pod is unable to scale\n  VALUE = {{ $value }}"
+    - alert: k8sHpaMetricAvailability
+      expr: 'kube_horizontalpodautoscaler_status_condition{status="false", condition="ScalingActive",cluster=~"core.*"} == 1'
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: k8s HPA metric availability (instance {{ $labels.horizontalpodautoscaler }})
+        description: "HPA is not able to collect metrics\n  VALUE = {{ $value }}"

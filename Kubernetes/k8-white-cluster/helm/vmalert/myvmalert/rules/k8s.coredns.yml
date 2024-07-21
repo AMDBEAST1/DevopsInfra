@@ -1,0 +1,120 @@
+groups:
+  - name: coredns.rules
+    interval: 300s
+    rules:
+      - alert: CorednsPanicCount
+        expr: increase(coredns_panic_count_total{container=~"coredns"}[10m]) > 0 or increase(coredns_panics_total{container=~"coredns|ec2-dns|.*node-local-dns"}[10m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          scope: internal
+        annotations:
+          message: "CoreDNS Panic Count (instance {{ $labels.instance }} on node {{ $labels.node }})"
+          dn: "{{ $labels.job }}-{{ $labels.namespace }}"
+      - alert: CodeDNSPodDown
+        expr: count(up{container=~"coredns",instance=~".*:9153"} == 0) by (pod) > 0
+        for: 1m
+        labels:
+          severity: warning
+          scope: public
+    
+        annotations:
+          message: "CoreDNS pod {{ $labels.pod }} down"
+          dn: "{{ $labels.instance }}-{{ $labels.node }}"
+      - alert: NodeLocalDNSPodDown
+        expr: count(up{job=~".*node-local-dns"} == 0) by (pod,cluster) > 0
+        for: 5m
+        labels:
+          severity: warning
+          scope: internal
+    
+        annotations:
+          message: "Node Local DNS Pod {{ $labels.cluster }} down"
+          dn: "{{ $labels.instance }}-{{ $labels.node }}"
+      # - alert: HighRateDNS
+      #   expr: sum(rate(coredns_dns_request_count_total{job=~"ec2-dns"}[1m])) by (node) > 4000 or sum(rate(coredns_dns_requests_total{job=~"ec2-dns"}[1m])) by (node) > 4000
+      #   for: 1m
+      #   labels:
+      #     severity: warning
+      #     scope: public
+      #     component: eil
+      #   annotations:
+      #     message: 'CoreDNS instance on node {{ $labels.node }} RPS {{ printf "%0.0f" $value }} > 4000'
+      #     
+      #     dn: '{{ $labels.instance }}-{{ $labels.node }}'
+      - alert: HighRateDNSPod
+        expr: sum(rate(coredns_dns_request_count_total{container=~"coredns|.*node-local-dns"}[1m])) by (pod, node,cluster) > 2000 or sum(rate(coredns_dns_requests_total{container=~"coredns|.*node-local-dns"}[1m])) by (pod, node,cluster) > 2000
+        for: 1m
+        labels:
+          severity: warning
+          scope: public
+    
+        annotations:
+          message: 'CoreDNS Pod {{ $labels.pod }} {{ $labels.cluster }} RPS {{ printf "%0.0f" $value }} > 2000'
+          dn: "{{ $labels.instance }}-{{ $labels.node }}"
+      - alert: CoreDNSFailedReload
+        expr: increase(coredns_reload_failed_total[10m]) > 0
+        for: 10m
+        labels:
+          severity: warning
+          scope: internal
+    
+        annotations:
+          message: "Reloading CoreDNS configuration has failed for {{ $labels.instance }}"
+          dn: "{{ $labels.instance }}-{{ $labels.node }}"
+  - name: coredns_forward
+    interval: 300s
+    rules:
+      - alert: CoreDNSForwardErrorsHigh
+        expr: |
+          label_replace(
+            sum(rate(coredns_forward_responses_total{container=~"coredns",rcode="SERVFAIL"}[5m])) by (node, pod, to, cluster)
+              /
+            sum(rate(coredns_forward_responses_total{container=~"coredns"}[5m])) by (node, pod, to, cluster),
+            "node", "$1", "pod", "(.+)"
+          ) > 0.01
+        for: 10m
+        labels:
+          severity: warning
+          scope: internal
+    
+        annotations:
+          message: CoreDNS Instance {{ $labels.node }} is returning SERVFAIL for more than 5% of forward requests to {{ $labels.to }}.
+          dn: "{{ $labels.node }}-{{ $labels.to }}"
+      - alert: CoreDNSForwardErrorsHigh
+        expr: |
+          label_replace(
+            sum(rate(coredns_forward_responses_total{container=~"coredns",rcode="SERVFAIL"}[5m])) by (node, pod, to, cluster)
+              /
+            sum(rate(coredns_forward_responses_total{container=~"coredns"}[5m])) by (node, pod, to, cluster),
+            "node", "$1", "pod", "(.+)"
+          ) > 0.05
+        for: 10m
+        labels:
+          severity: critical
+          scope: public
+    
+        annotations:
+          message: CoreDNS Instance {{ $labels.node }} is returning SERVFAIL for more than 1% of forward requests to {{ $labels.to }}.
+          dn: "{{ $labels.node }}-{{ $labels.to }}"
+      - alert: CoreDNSForwardHealthcheckFailureCount
+        expr: |
+          sum(rate(coredns_forward_healthcheck_failures_total{container=~".*"}[5m])) by (node, pod, to, cluster) > 0
+        for: 10m
+        labels:
+          severity: warning
+          scope: internal
+    
+        annotations:
+          message: CoreDNS Instance {{ $labels.node }} health checks have failed to upstream server {{ $labels.to }}.
+          dn: "{{ $labels.cluster }}-{{ $labels.node }}-{{ $labels.to }}"
+      - alert: CoreDNSForwardHealthcheckBrokenCount
+        expr: |
+          sum(rate(coredns_forward_healthcheck_broken_total{container=~".*"}[5m])) by (node, pod, cluster) > 0
+        for: 1m
+        labels:
+          severity: critical
+          scope: public
+        annotations:
+          message: CoreDNS Instance {{ $labels.node }} health checks have failed for all upstream servers.
+          dn: "{{ $labels.cluster }}"

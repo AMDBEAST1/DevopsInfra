@@ -1,0 +1,13 @@
+{{- if eq .Values.server.configMap "" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "vmalert.server.configname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "vmalert.server.labels" . | nindent 4 }}
+data:
+  alert-rules.yml: |
+    {{ toYaml .Values.server.config.alerts | nindent 4 }}
+    {{- (.Files.Glob "rules/**.yml").AsConfig | nindent 2 }}
+
+{{- end }}

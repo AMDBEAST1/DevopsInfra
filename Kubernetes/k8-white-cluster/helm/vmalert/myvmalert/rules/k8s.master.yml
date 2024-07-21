@@ -1,0 +1,22 @@
+groups:
+  - name: k8s.master.alerts
+    interval: 300s
+    rules:
+      - alert: KubeMasterMemoryUtilization
+        annotations:
+          message: "K8S master memory utilization great then 85 %. Yandex cloud name - {{ $labels.cloudName }} ; folder - {{ $labels.folderName }} ; K8S cluster - {{ $labels.cluster_id }}"
+          value: "{{ $value }}"
+        expr: master_memory_utilization_percent > 85
+        for: 1m
+        labels:
+          service: managed-kubernetes
+          severity: critical
+      - alert: KubeMasterCpuUtilization
+        annotations:
+          message: "K8S master CPU utilization great then 85 %. Yandex cloud name - {{ $labels.cloudName }} ; folder - {{ $labels.folderName }} ; K8S cluster - {{ $labels.cluster_id }}"
+          value: "{{ $value }}"
+        expr: master_cpu_utilization_percent > 85
+        for: 1m
+        labels:
+          service: managed-kubernetes
+          severity: critical

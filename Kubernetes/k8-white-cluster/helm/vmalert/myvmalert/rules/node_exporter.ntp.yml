@@ -1,0 +1,20 @@
+groups:
+  - name: node.ntp-rules
+    interval: 300s
+    rules:
+      - alert: NodeIsUnsynchronised
+        expr: 'node_ntp_stratum > 16'
+        for: 20s
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.dns_hostname }} node ntp stratum equal or more than 16. That means this node is unsynchronised."
+          description: "Returned value is {{ $value }} for {{ $labels.dns_hostname }}."
+      - alert: TooMuchOffset
+        expr: 'node_ntp_offset_seconds > 3'
+        for: 20s
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.dns_hostname }} too much ntp offset."
+          description: "Returned value is {{ $value }} for {{ $labels.dns_hostname }}."

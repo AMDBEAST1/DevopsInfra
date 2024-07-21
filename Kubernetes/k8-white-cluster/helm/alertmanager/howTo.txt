@@ -1,0 +1,6 @@
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+helm repo update
+helm search repo prometheus-community/
+helm show values prometheus-community/alertmanager > values.yaml
+helm upgrade alertman-k8-white prometheus-community/alertmanager -f values.yaml -n monitoring --debug --install --version 1.11.0

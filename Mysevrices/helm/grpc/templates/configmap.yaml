@@ -1,0 +1,14 @@
+{{- if .Values.configmap.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.deploymentname}}
+  labels:
+    {{- include "grpc.labels" . | nindent 4 }}
+data:
+{{- with .Values.configmap.data }}
+      {{- toYaml . | nindent 8 }}
+    {{- end }}
+{{- end }}
+
+

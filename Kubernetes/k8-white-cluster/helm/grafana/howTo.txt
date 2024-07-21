@@ -1,0 +1,7 @@
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+
+
+helm search repo grafana
+helm show values grafana/grafana > values.yaml
+helm upgrade grafana-k8-white grafana/grafana -f values.yaml -n monitoring --debug --install --version 8.3.5

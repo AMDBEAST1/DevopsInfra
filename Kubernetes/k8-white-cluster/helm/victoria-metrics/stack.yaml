@@ -1,0 +1,164 @@
+
+victoria-metrics-operator:
+  enabled: true
+  operator:
+    disable_prometheus_converter: false
+  extraVolumeMounts:
+    - name: egopay-ca-certificates
+      mountPath: "/etc/ssl/certs/egopay-ca-certificates.crt"
+      subPath: egopay-ca-certificates.crt
+  extraVolumes:
+    - name: egopay-ca-certificates
+      secret:
+        secretName: egopay-ca-certificates
+
+serviceAccount:
+  create: true
+
+
+externalVM:
+  read:
+    url: "http://vm-cluster-victoria-metrics-cluster-vmselect:8481/select/0/prometheus"
+    # bearerTokenSecret:
+    #   name: dbaas-read-access-token
+    #   key: bearerToken
+  write:
+    url: "http://vm-cluster-victoria-metrics-cluster-vminsert:8480/insert/0/prometheus"
+    # bearerTokenSecret:
+    #   name: dbaas-read-access-token
+    #   key: bearerToken
+
+##############
+vmagent:
+  enabled: true
+  scrapeInterval: 5m
+  additionalRemoteWrites:
+    - url: http://vm-cluster-victoria-metrics-cluster-vminsert:8480/insert/0/prometheus
+  spec:
+    externalLabels:
+      cluster: k8-white
+    extraArgs:
+      # remoteWrite.tlsCAFile: "/etc/ssl/certs/egopay-ca-certificates.crt"
+      promscrape.streamParse: "true"
+      remoteWrite.tlsInsecureSkipVerify: "true"
+      promscrape.maxScrapeSize: "267772160"
+  ingress:
+    enabled: false
+vmalert:
+  enabled: false
+
+
+## -- Create default rules for monitoring the cluster
+defaultRules: 
+  create: false
+  rules:
+    node: true
+    vmagent: true
+    kubePrometheusGeneral: true
+    kubePrometheusNodeRecording: true
+    kubeStateMetrics: true
+    general: true
+    k8s: true
+    kubernetesApps: true
+    kubernetesResources: true
+    kubernetesStorage: true
+    kubernetesSystem: true
+    kubeApiserver: true
+    kubeApiserverAvailability: true
+    kubeApiserverBurnrate: true
+    kubeApiserverSlos: true
+    kubelet: true
+    kubeScheduler: true
+    network: true
+    etcd: true
+    prometheus: true
+    prometheusOperator: true
+    vmsingle: false
+    vmhealth: false
+    alertmanager: false
+
+## -- Create default dashboards
+defaultDashboardsEnabled: false
+
+## -- Create experimental dashboards
+experimentalDashboardsEnabled: false
+
+
+vmsingle:
+  enabled: false
+
+vmcluster:
+  enabled: false
+
+alertmanager:
+  enabled: false
+
+grafana:
+  enabled: false
+  defaultDashboardsEnabled: false
+
+
+
+
+
+
+
+# vmalert:
+#   annotations: {}
+#   enabled: false
+
+#   # Controls whether VMAlert should use VMAgent or VMInsert as a target for remotewrite
+#   remoteWriteVMAgent: false
+#   # spec for VMAlert crd
+#   # https://github.com/VictoriaMetrics/operator/blob/master/docs/api.MD#vmalertspec
+#   spec:
+#     selectAllByDefault: true
+#     image:
+#       tag: v1.85.3
+#     evaluationInterval: 15s
+
+#   # extra vmalert annotation templates
+#   templateFiles:
+#     {}
+#     # template_1.tmpl: |-
+#     #   {{ define "hello" -}}
+#     #   hello, Victoria!
+#     #   {{- end }}
+#     # template_2.tmpl: ""
+
+#   ingress:
+#     enabled: false
+#     # For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName
+#     # See https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress
+#     # ingressClassName: nginx
+#     # Values can be templated
+#     annotations:
+#       {}
+#       # kubernetes.io/ingress.class: nginx
+#       # kubernetes.io/tls-acme: "true"
+#     labels: {}
+#     path: /
+#     # pathType is only for k8s > 1.19
+#     pathType: Prefix
+
+#     hosts:
+#       - vmalert.domain.com
+#     ## Extra paths to prepend to every host configuration. This is useful when working with annotation based services.
+#     extraPaths: []
+#     # - path: /*
+#     #   backend:
+#     #     serviceName: ssl-redirect
+#     #     servicePort: use-annotation
+#     ## Or for k8s > 1.19
+#     # - path: /*
+#     #   pathType: Prefix
+#     #   backend:
+#     #     service:
+#     #       name: ssl-redirect
+#     #       port:
+#     #         name: service
+#     tls: []
+#     #  - secretName: vmalert-ingress-tls
+#     #    hosts:
+#     #      - vmalert.domain.com
+

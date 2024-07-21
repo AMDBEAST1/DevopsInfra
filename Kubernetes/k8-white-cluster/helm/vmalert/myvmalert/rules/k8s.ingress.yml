@@ -1,0 +1,31 @@
+groups:
+  - name: nginx-ingress.alerts
+    interval: 300s
+    rules:
+      - alert: SSlexpiretime21days
+        annotations:
+          message: "SSL certificate for {{ $labels.host }} on ingress class {{ $labels.class }} will expire within 21 day"
+          dn: "{{ $labels.class }}-{{ $labels.cluster}}"
+        expr: avg(nginx_ingress_controller_ssl_expire_time_seconds) by (class,host,cluster) < (time() + (21 * 24 * 3600))
+        for: 1m
+        labels:
+          scope: public
+          severity: warning
+      - alert: SSlexpiretime14days
+        annotations:
+          message: "SSL certificate for {{ $labels.host }} on ingress class {{ $labels.class }} will expire within 2 weeks"
+          dn: "{{ $labels.class }}-{{ $labels.cluster}}"
+        expr: avg(nginx_ingress_controller_ssl_expire_time_seconds) by (class,host,cluster) < (time() + (14 * 24 * 3600))
+        for: 1m
+        labels:
+          scope: public
+          severity: warning
+      - alert: SSlexpiretime3days
+        annotations:
+          message: "SSL certificate for {{ $labels.host }} on ingress class {{ $labels.class }} will expire within 3 days"
+          dn: "{{ $labels.class }}-{{ $labels.cluster}}"
+        expr: avg(nginx_ingress_controller_ssl_expire_time_seconds) by (class,host,cluster) < (time() + (3 * 24 * 3600))
+        for: 1m
+        labels:
+          scope: public
+          severity: warning

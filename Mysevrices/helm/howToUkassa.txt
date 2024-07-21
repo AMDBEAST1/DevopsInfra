@@ -1,0 +1,3 @@
+helm upgrade dev-ukassa-status grpc -f values/dev-ukassa-status/values.yaml --install --namespace egopay-dev
+
+helm template dev-ukassa-status grpc -f values/dev-ukassa-status/values.yaml 

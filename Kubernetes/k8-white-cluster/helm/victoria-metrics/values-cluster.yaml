@@ -1,0 +1,127 @@
+vmselect:
+  extraArgs:
+    envflag.enable: "true"
+    envflag.prefix: VM_
+    loggerFormat: json
+
+  horizontalPodAutoscaler:
+    # -- Use HPA for vmselect component
+    enabled: true
+    # -- Maximum replicas for HPA to use to to scale the vmselect component
+    maxReplicas: 3
+    # -- Minimum replicas for HPA to use to scale the vmselect component
+    minReplicas: 2
+    # -- Metric for HPA to use to scale the vmselect component
+    metrics: []
+    # -- Behavior settings for scaling by the HPA
+    behavior: {}
+
+  nodeSelector:
+    node-role: state
+  # -- Pod affinity
+  # affinity:
+  #   podAntiAffinity:
+  #     preferredDuringSchedulingIgnoredDuringExecution:
+  #     - weight: 100
+  #       podAffinityTerm:
+  #         labelSelector:
+  #           matchExpressions:
+  #           - key: node-role
+  #             operator: In
+  #             values:
+  #             - state
+  #         topologyKey: 'kubernetes.io/hostname'
+  resources:
+      limits:
+        cpu: 1100m
+        memory: 1100Mi
+      requests:
+        cpu: 1000m
+        memory: 1000Mi
+vminsert:
+  # -- Enable deployment of vminsert component. Deployment is used
+  enabled: true
+
+  extraArgs:
+    envflag.enable: "true"
+    envflag.prefix: VM_
+    loggerFormat: json
+  horizontalPodAutoscaler:
+    # -- Use HPA for vminsert component
+    enabled: true
+    # -- Maximum replicas for HPA to use to to scale the vminsert component
+    maxReplicas: 4
+    # -- Minimum replicas for HPA to use to scale the vminsert component
+    minReplicas: 2
+    # -- Metric for HPA to use to scale the vminsert component
+    metrics: []
+    # -- Behavior settings for scaling by the HPA
+    behavior: {}
+  
+  nodeSelector:
+    node-role: state
+  # Affinity:
+  # podAntiAffinity:
+  #   preferredDuringSchedulingIgnoredDuringExecution:
+  #   - weight: 100
+  #     podAffinityTerm:
+  #       labelSelector:
+  #         matchExpressions:
+  #         - key: node-role
+  #           operator: In
+  #           values:
+  #           - state
+  #       topologyKey: 'kubernetes.io/hostname'
+  resources:
+      limits:
+        cpu: 700m
+        memory: 800Mi
+      requests:
+        cpu: 500m
+        memory: 640Mi
+
+vmstorage:
+  # -- Enable deployment of vmstorage component. StatefulSet is used
+  enabled: true
+  extraArgs:
+    envflag.enable: "true"
+    envflag.prefix: VM_
+    loggerFormat: json
+    retentionPeriod: 14d
+    
+  
+  nodeSelector:
+    node-role: state
+  
+  persistentVolume:
+    # -- Create/use Persistent Volume Claim for vmstorage component. Empty dir if false. If true,  vmstorage will create/use a Persistent Volume Claim
+    enabled: true
+    name: vmstorage-volume
+
+    # -- Array of access modes. Must match those of existing PV or dynamic provisioner. Ref: [http://kubernetes.io/docs/user-guide/persistent-volumes/](http://kubernetes.io/docs/user-guide/persistent-volumes/)
+    accessModes:
+      - ReadWriteOnce
+    # -- Persistent volume annotations
+    annotations: {}
+    # -- Persistent volume labels
+    labels: {}
+    # -- Storage class name. Will be empty if not setted
+    storageClass: "local-path"
+    # --  Existing Claim name. Requires vmstorage.persistentVolume.enabled: true. If defined, PVC must be created manually before volume will be bound
+    existingClaim: ""
+
+    # -- Data root path. Vmstorage data Persistent Volume mount root path
+    mountPath: /storage
+    # -- Size of the volume.
+    size: 60Gi
+    # -- Mount subpath
+    subPath: ""
+  # -- Count of vmstorage pods
+  replicaCount: 2
+  resources:
+     limits:
+       cpu: 1000m
+       memory: 1200Mi
+     requests:
+       cpu: 900m
+       memory: 1100Mi

@@ -1,0 +1,31 @@
+groups:
+  - name: node.rules
+    interval: 300s
+    rules:
+      - alert: ExporterDown
+        expr: up{scrape_type="node_exporter"} == 0
+        for: 90s
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.dns_hostname }} node exporter is down."
+          summary_resolved: "{{ $labels.dns_hostname }} node exporter is up."
+          description: "Returned value is {{ .Value }} for {{ $labels.dns_hostname }} node exporter."
+      - alert: HostRebooted
+        expr: (time() - node_boot_time_seconds) < 180
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Too low uptime found on {{ $labels.dns_hostname }}"
+          summary_resolved: "Uptime is okay on {{ $labels.dns_hostname }}"
+          description: "Uptime is too small on {{ $labels.dns_hostname }}, looks that node was rebooted"
+      - alert: ServiceIsDown
+        expr: node_systemd_unit_state{state="failed",name!~"hv-.*|fwupd-refresh.*"} == 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Service {{ $labels.name }} is down on {{ $labels.dns_hostname }}"
+          summary_resolved: "Service {{ $labels.name }} is up on {{ $labels.dns_hostname }}"
+          description: "Service {{ $labels.name }} is down on {{ $labels.dns_hostname }} which can lead to some services unavailability"

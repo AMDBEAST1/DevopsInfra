@@ -1,0 +1,13 @@
+groups:
+  - name: node.memory-rules
+    interval: 300s
+    rules:
+      - alert: OutOfMemory
+        expr: (node_memory_MemFree_bytes{type!='scylladb'} + node_memory_Cached_bytes + node_memory_Buffers_bytes) / node_memory_MemTotal_bytes * 100 < 15
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Out of memory on {{ $labels.dns_hostname }}, usage is more than 85%"
+          summary_resolved: "Memory usage is under 85% on {{ $labels.dns_hostname }}"
+          description: "Node {{ $labels.dns_hostname }} memory is filling up"

@@ -1,0 +1,14 @@
+helm repo add opensearch https://opensearch-project.github.io/helm-charts/
+helm repo update
+helm search repo opensearch
+helm show values opensearch/opensearch > values.yaml
+
+helm install my-deployment  opensearch/opensearch
+
+helm upgrade opensearch-cluster  opensearch/opensearch -f values.yaml -n monitoring --debug --install --version 2.21.0
+
+
+helm show values opensearch/opensearch-dashboards > valuesdashboardfull.yaml
+
+
+helm upgrade opensearch-dashboard opensearch/opensearch-dashboards  -f valuesdashboard.yaml -n monitoring --debug --install --version 2.19.0
