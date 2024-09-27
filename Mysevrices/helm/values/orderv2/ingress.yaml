@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dev-orderv2-grpc
+  namespace: egopay-dev
+  labels:
+    app.kubernetes.io/instance: dev-orderv2
+    app.kubernetes.io/name: grpc
+    k8slens-edit-resource-version: v1
+  annotations:
+    meta.helm.sh/release-name: dev-orderv2
+    meta.helm.sh/release-namespace: egopay-dev
+    nginx.ingress.kubernetes.io/backend-protocol: FCGI
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      auth_request /auth/;
+      auth_request_set $egotoken $upstream_http_egotoken;
+      fastcgi_param EGOTOKEN        $egotoken;
+      allow   all;
+    nginx.ingress.kubernetes.io/ssl-redirect: 'false'
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: dev.testnew.egopay.ru
+      http:
+        paths:
+          - path: /order/v2
+            pathType: Prefix
+            backend:
+              service:
+                name: orderv2
+                port:
+                  number: 80

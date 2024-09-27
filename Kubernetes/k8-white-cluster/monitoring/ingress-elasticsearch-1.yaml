@@ -1,8 +1,8 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: rabbitmq-testnew-egopay-ingress
-  namespace: egopay-dev
+  name: es-testnew-egopay-ingress
+  namespace: monitoring
   annotations:
     kubernetes.io/ingress.class: "nginx"
     #nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
@@ -17,31 +17,21 @@ metadata:
     #nginx.ingress.kubernetes.io/proxy-next-upstream-tries: '3'
     #nginx.ingress.kubernetes.io/proxy-read-timeout: '180'
     #nginx.ingress.kubernetes.io/proxy-send-timeout: '180'
-    #nginx.ingress.kubernetes.io/rewrite-target: /$1
+    #nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
   ingressClassName: nginx
   # tls:
   #   - hosts:
-  #       - monitoring.testnew.egopay.ru
+  #       - es-new.egopay.ru
   #     secretName: monitoring-egopay-api-tls
   rules:
-    - host: rabbitmq-stage.testnew.egopay.ru
+    - host: es-new.egopay.ru
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: old-rabbitmq
+                name: elasticsearch-master
                 port:
-                  number: 15672
-
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: old-rabbitmq-external
-  namespace: egopay-dev
-spec:
-  type: ExternalName
-  externalName: old-rabbitmq.egopay-stage.svc.cluster.local
+                  number:  9200

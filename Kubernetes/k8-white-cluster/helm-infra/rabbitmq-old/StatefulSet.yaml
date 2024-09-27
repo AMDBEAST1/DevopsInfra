@@ -1,0 +1,136 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  namespace: egopay-dev
+  name: old-rabbitmq
+  labels:
+    app: old-rabbitmq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: old-rabbitmq
+      version: 0.0.1
+  volumeClaimTemplates:
+    - kind: PersistentVolumeClaim
+      apiVersion: v1
+      metadata:
+        name: storage
+        creationTimestamp: null
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: local-path
+        volumeMode: Filesystem
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: old-rabbitmq
+        version: 0.0.1
+    spec:
+      volumes:
+        - name: rabbitmq-config
+          configMap:
+            name: old-rabbitmq-config
+            items:
+              - key: rabbitmq.config
+                path: rabbitmq.config
+              - key: enabled_plugins
+                path: enabled_plugins
+            defaultMode: 420
+      nodeSelector:
+        node-role: state
+      containers:
+        - name: old-rabbitmq-1
+          image: 10.1.10.86:5000/build4testing:s9941-RabbitMQ-6-develop
+          ports:
+            - name: manage
+              containerPort: 15672
+              protocol: TCP
+            - name: amqp
+              containerPort: 5672
+              protocol: TCP
+            - name: cluster5
+              containerPort: 25672
+              protocol: TCP
+            - name: cluster4
+              containerPort: 4369
+              protocol: TCP
+            - name: metrics
+              containerPort: 9419
+              protocol: TCP
+          env:
+            - name: RABBITMQ_ERLANG_COOKIE
+              value: mkdjuwqehwqnnbdsaiueqw
+            - name: RABBITMQ_SECURE_PASSWORD
+              value: 'yes'
+            - name: RABBITMQ_USERNAME
+              value: admin
+            - name: RABBITMQ_PASSWORD
+              value: admin
+            - name: RABBITMQ_PLUGINS
+              value: >-
+                rabbitmq_management, rabbitmq_peer_discovery_k8s,
+                rabbitmq_delayed_message_exchange
+
+                , rabbitmq_prometheus
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: MY_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+          resources:
+            limits:
+              cpu: '3'
+              memory: 1100Mi
+            requests:
+              cpu: '2'
+              memory: 1000Mi
+          volumeMounts:
+            - name: rabbitmq-config
+              mountPath: /etc/rabbitmq
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - '-ec'
+                - >-
+                  curl -f --user admin:$RABBITMQ_PASSWORD
+                  127.0.0.1:15672/api/health/checks/virtual-hosts
+            initialDelaySeconds: 120
+            timeoutSeconds: 20
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 6
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - '-ec'
+                - >-
+                  curl -f --user admin:$RABBITMQ_PASSWORD
+                  127.0.0.1:15672/api/health/checks/local-alarms
+            initialDelaySeconds: 10
+            timeoutSeconds: 20
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 3
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      schedulerName: default-scheduler

@@ -1,0 +1,5 @@
+helm repo add elastic https://helm.elastic.co
+helm search repo elastic/logstash 
+
+helm upgrade logstash elastic/logstash -f values.yaml -n monitoring --debug --install --version 7.5.0
+helm show values elastic/logstash --version 7.5.0  > values.yaml

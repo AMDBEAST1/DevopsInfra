@@ -1,0 +1,6 @@
+helm upgrade "name" grpc -f "path to file" --install --namespace "namespace"
+
+
+#Check file before helm upgrade
+
+helm template dev-ukassa-status grpc -f values/dev-ukassa-status/values.yaml > 123.yaml

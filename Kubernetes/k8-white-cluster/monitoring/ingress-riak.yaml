@@ -1,8 +1,8 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: rabbitmq-testnew-egopay-ingress
-  namespace: egopay-dev
+  name: riak-testnew-egopay-ingress
+  namespace: egopay-stage
   annotations:
     kubernetes.io/ingress.class: "nginx"
     #nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
@@ -25,23 +25,22 @@ spec:
   #       - monitoring.testnew.egopay.ru
   #     secretName: monitoring-egopay-api-tls
   rules:
-    - host: rabbitmq-stage.testnew.egopay.ru
+    - host: riak-stage.testnew.egopay.ru
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: old-rabbitmq
+                name: riak
                 port:
-                  number: 15672
-
+                  number: 8087
 ---
 kind: Service
 apiVersion: v1
 metadata:
-  name: old-rabbitmq-external
-  namespace: egopay-dev
+  name: riak-external
+  namespace: egopay-stage
 spec:
   type: ExternalName
-  externalName: old-rabbitmq.egopay-stage.svc.cluster.local
+  externalName: riak.egopay-stage.svc.cluster.local

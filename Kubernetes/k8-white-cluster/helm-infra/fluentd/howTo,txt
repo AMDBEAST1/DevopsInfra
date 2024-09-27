@@ -1,0 +1,6 @@
+helm repo add kokuwa https://kokuwaio.github.io/helm-charts
+
+helm search repo kokuwa/fluentd-elasticsearch
+helm show values kokuwa/fluentd-elasticsearch --version 12.0.0 > valuess.yaml
+helm upgrade fluentd kokuwa/fluentd-elasticsearch -f values.yaml -n monitoring --debug --install --version 12.0.0
+

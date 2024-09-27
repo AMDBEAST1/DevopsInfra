@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: egopay-dev
+  name: old-rabbitmq-config
+data:
+  enabled_plugins: |
+    [rabbitmq_delayed_message_exchange,rabbitmq_management].
+  rabbitmq.config: |+
+    [
+      {rabbit, [
+        {cluster_nodes, {['rabbit@rabbit1', 'rabbit@rabbit2', 'rabbit@rabbit3'], disc}},
+        {cluster_partition_handling, pause_minority},
+        {default_user, <<"admin">>},
+        {default_pass, <<"admin">>}
+      ]},
+      {kernel, [
+
+      ]}
+    ,
+      {rabbitmq_management, [
+        {listener, [
+          {port, 15672}
+        ]}
+      ]}
+    ].
+

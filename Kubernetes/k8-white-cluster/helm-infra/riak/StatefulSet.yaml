@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: riak
+  namespace: egopay-stage
+  generation: 96
+  creationTimestamp: '2018-04-06T06:30:12Z'
+  labels:
+    app: riak
+    version: 0.0.1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: riak
+      version: 0.0.1
+  volumeClaimTemplates:
+    - kind: PersistentVolumeClaim
+      apiVersion: v1
+      metadata:
+        name: storage
+        creationTimestamp: null
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 5Gi
+        storageClassName: local-path
+        volumeMode: Filesystem
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: riak
+        version: 0.0.1
+    spec:
+      nodeSelector:
+        node-role: state
+      containers:
+        - name: riak
+          image: 10.1.10.86:5000/build4testing:s9931-riak-1112-develop
+          command:
+            - /sbin/my_init
+          args:
+            - '--quiet'
+          ports:
+            - name: http-pub
+              containerPort: 8098
+              protocol: TCP
+            - name: proto-buff-pub
+              containerPort: 8087
+              protocol: TCP
+            - name: ssh
+              containerPort: 22
+              protocol: TCP
+          env:
+            - name: DOCKER_RIAK_CLUSTER_SIZE
+              value: '4'
+            - name: DOCKER_RIAK_BACKEND
+              value: memory
+            - name: DOCKER_RIAK_STRONG_CONSISTENCY
+              value: 'off'
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: MY_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+          resources: 
+            limits:
+              cpu: '3'
+              memory: 1100Mi
+            requests:
+              cpu: '2'
+              memory: 1000Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      schedulerName: default-scheduler

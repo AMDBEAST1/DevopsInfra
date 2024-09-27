@@ -1,0 +1,187 @@
+deploymentname: order/v2
+volumes:
+  - name: config
+    configMap:
+      name: order/v2
+      defaultMode: 420
+  - name: oracle
+    configMap:
+      name: tnsnames
+      defaultMode: 420
+image:
+  repository: 10.1.10.86:5000
+  tag: build4testing:s9510-core.order_v2-127493-develop
+  
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations: 
+    nginx.ingress.kubernetes.io/backend-protocol: FCGI
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      auth_request /auth/;
+      auth_request_set $egotoken $upstream_http_egotoken;
+      fastcgi_param EGOTOKEN        $egotoken;
+      allow   all;
+    nginx.ingress.kubernetes.io/ssl-redirect: 'false'
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: dev.testnew.egopay.ru
+      paths:
+        - path: /order/v2
+          pathType: Prefix
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+configmaptns:
+  enabled: false
+  data: 
+    circus.conf: ''
+    tnsnames.ora: |
+      main =
+         (DESCRIPTION =
+           (ADDRESS = (PROTOCOL = TCP)(HOST = 10.1.10.199)(PORT = 1521))
+           (CONNECT_DATA =
+             (SERVICE_NAME = epaytest.egopay.ru)
+           )
+          )
+
+      refund =
+         (DESCRIPTION =
+            (ADDRESS = (PROTOCOL = TCP)(HOST = vv-edudb-01.sirena-travel.ru)(PORT = 1521))
+           (CONNECT_DATA =
+            (SERVER = DEDICATED)
+            (SERVICE_NAME = edu)
+           )
+         )
+configmap:
+  enabled: true
+  data:
+    appt.ini: |
+      [main]
+      chargereq_queue = TEST.CHARGEREQ
+      chargeres_queue = TEST.CHARGERES
+      shop_queue = TEST.SHOPGATE
+      client_queue = TEST.PAYER
+      checkreq_queue = TEST.CHECKREQ
+      checkres_queue = TEST.CHECKRES
+      killer_queue = TEST.KILLER
+      fiscalization_queue = TEST.FISCALIZATION
+      ovoid_queue = TEST.REVERSAL
+      ovoidres_queue = TEST.REVERSALRES
+      bonus_cancel_queue = TEST.BONUS_CANCEL
+      bonus_cancelres_queue = TEST.BONUS_CANCELRES
+
+      posreq_queue = TEST.POSREQ
+      posres_queue = TEST.POSRES
+      notify_queue = TEST.NOTIFY
+      payment_complete_queue = TEST.PAYMENT_COMPLETE
+      amqp://admin:admin@rabbitmq-testnew-egopay-ingress:15672
+      data_connect = oracle://user=e_order_v2 password=fvKyClUW48 service=main
+      sets_connect = oracle://user=c_order_v2 password=mASgyqLx85 service=main
+      logger = dest=udp addr=10.1.100.182:514 facility=0 filter=[+A] procnamefmt=N
+      scheck_timeout = 120
+      beaker.session.type = riak
+      beaker.session.url = 10.1.100.189:8342
+      [customer_notify]
+      bnpl_queue = TEST.CUSTOMER_MAIL_BNPL
+
+      sbp_queue = TEST.CUSTOMER_MAIL_SBP
+      [subscription]
+      min_period = 1
+      [request]
+      type = riak
+      url = 10.1.100.189:8342
+      lock_dir = /tmp/sessionlocks
+      #timeout = 15
+      use_cookies = False
+      [rest]
+      reg_timeout = 3
+      status_timeout = 3
+      ca_certs = /etc/ssl/certs/ca-certificates.crt
+      [hsm.crypto]
+      id = 2
+      mat_index = 2
+      cryptogram = 0F07070F0707E707070707070707070707070707C7070707
+      algorithm = 3des-ede2-ecb
+      [hsm]
+      host = keyserver.sirena-travel.ru
+      tokenization_url = /hsm/tokenization/v1
+      port = 443
+      crypto_id = 2
+      request_timeout = 1000
+      [test.comarch]
+      cards = 123456789,987654321
+      code = 0
+      [ws_order_v2]
+      shop_check_omit_shops =
+      [loggers]
+      keys = root
+      [handlers]
+      keys = console
+      [formatters]
+      keys = generic
+      [logger_root]
+      level = DEBUG
+      handlers = console
+      [handler_console]
+      class = handlers.SysLogHandler
+      args = (('10.1.100.182', 514), handlers.SysLogHandler.LOG_LOCAL0)
+      level = NOTSET
+      formatter = generic
+      [formatter_generic]
+      format = order_v2[%(thread)X] [%(name)s] %(message)s
+      datefmt = %H:%M:%S
+  
+    circus.conf: |
+      [circus]
+      [env]
+      PYTHONPATH=/usr/local/lib/python3.9/site-packages
+      LANG=ru_RU.UTF-8
+      TNS_ADMIN=/oracle/
+      LD_LIBRARY_PATH=/usr/lib/oracle/19.11/client/lib
+      NLS_LANG=AMERICAN.UTF8
+      [watcher:order_v2]
+      cmd = python3 -m wsrunner.py -c /config/appt.ini --fd $(circus.sockets.order_v2) -n order_v2
+      numprocesses = 1
+      use_sockets = True
+      stdout_stream.class = StdoutStream
+      stderr_stream.class = StdoutStream
+      [socket:order_v2]
+      host = 0.0.0.0
+      port = 80
+      blocking = True
+
+command:
+  - /usr/local/bin/circusd
+args:
+  - /config/circus.conf
+env:
+  - name: TNS_ADMIN
+    value: /oracle/
+  - name: LD_LIBRARY_PATH
+    value: /usr/lib/oracle/12.1/client/lib
+
+
+
+
+volumeMounts:
+  - name: oracle
+    mountPath: /oracle
+  - name: config
+    mountPath: /config
+strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+
+
+resources:
+  limits:
+    cpu: 300m
+    memory: 512Mi
+  requests:
+    cpu: 300m
+    memory: 500Mi

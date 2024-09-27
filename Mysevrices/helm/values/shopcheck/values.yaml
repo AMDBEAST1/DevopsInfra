@@ -1,0 +1,128 @@
+deploymentname: shopcheck
+volumes:
+  - name: config
+    configMap:
+      name: shopcheck
+      defaultMode: 420
+  - name: oracle
+    configMap:
+      name: tnsnames
+      defaultMode: 420
+image:
+  repository: 10.1.10.86:5000
+  tag: build4testing:s9630-shop.gate-127463-develop
+  
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: dev.testnew.egopay.ru
+      paths:
+        - path: /shopcheck
+          pathType: Prefix
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+configmaptns:
+  enabled: false
+  data: 
+    circus.conf: ''
+    tnsnames.ora: |
+      main =
+         (DESCRIPTION =
+           (ADDRESS = (PROTOCOL = TCP)(HOST = 10.1.10.199)(PORT = 1521))
+           (CONNECT_DATA =
+             (SERVICE_NAME = epaytest.egopay.ru)
+           )
+          )
+
+      refund =
+         (DESCRIPTION =
+            (ADDRESS = (PROTOCOL = TCP)(HOST = vv-edudb-01.sirena-travel.ru)(PORT = 1521))
+           (CONNECT_DATA =
+            (SERVER = DEDICATED)
+            (SERVICE_NAME = edu)
+           )
+         )
+configmap:
+  enabled: true
+  data:
+    appt.ini: |
+      [main]
+      checkreq_queue = TEST.CHECKREQ
+      checkres_queue = TEST.CHECKRES
+      killer_queue = TEST.KILLER
+      mq_connect = amqp://admin:admin@rabbitmq:5672
+      data_connect = oracle://user=e_shopcheck password=EdDNyOaP69 service=main
+      sets_connect = oracle://user=c_shopcheck password=hxXvnGEu26 service=main
+      logger = dest=udp addr=10.1.100.182:514 facility=0 filter=[+A] procnamefmt=N
+  
+      [sirena]
+      order_timeout = 90
+      status_timeout = 90
+      query_timeout = 90
+      [hsm.crypto]
+      id = 2
+      mat_index = 2
+      cryptogram = 0F07070F0707E707070707070707070707070707C7070707
+      algorithm = 3des-ede2-ecb
+      [hsm]
+      handshake_timeout=100
+      connect_timeout=100
+      request_timeout =100
+      host = keyserver.sirena-travel.ru
+      tokenization_url = /hsm/tokenization/v1
+      port = 443
+      crypto_id = 2
+  
+    circus.conf: |
+      [circus]
+      [env]
+      PYTHONPATH=/usr/local/lib/python3.9/site-packages
+      LANG=ru_RU.UTF-8
+      TNS_ADMIN=/oracle/
+      LD_LIBRARY_PATH=/usr/lib/oracle/19.11/client/lib
+      NLS_LANG=AMERICAN.UTF8
+      [watcher:shopcheck]
+      cmd = /usr/local/bin/shopcheck -c /config/appt.ini
+      numprocesses = 1
+      use_sockets = True
+      stdout_stream.class = StdoutStream
+      stderr_stream.class = StdoutStream
+
+command:
+  - /usr/local/bin/circusd
+args:
+  - /config/circus.conf
+env:
+  - name: TNS_ADMIN
+    value: /oracle/
+  - name: LD_LIBRARY_PATH
+    value: /usr/lib/oracle/12.1/client/lib
+
+
+
+
+volumeMounts:
+  - name: oracle
+    mountPath: /oracle
+  - name: config
+    mountPath: /config
+strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+
+
+resources:
+  limits:
+    cpu: 300m
+    memory: 512Mi
+  requests:
+    cpu: 300m
+    memory: 500Mi

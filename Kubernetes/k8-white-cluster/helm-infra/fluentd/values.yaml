@@ -1,0 +1,14 @@
+hostLogDir:
+  varLog: /var/log
+  dockerContainers: /var/lib/containers
+  libSystemdDir: /usr/lib64
+resources: 
+   limits:
+     cpu: 500m
+     memory: 400Mi
+   requests:
+     cpu: 500m
+     memory: 300Mi
+
+elasticsearch:
+   hosts: ["elasticsearch-master:9200"]

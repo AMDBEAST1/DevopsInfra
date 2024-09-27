@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: egopay-dev
+  name: old-rabbitmq
+spec:
+  ports:
+    - name: amqp
+      protocol: TCP
+      port: 5672
+      targetPort: amqp
+    - name: epmd
+      protocol: TCP
+      port: 4369
+      targetPort: epmd
+    - name: dist
+      protocol: TCP
+      port: 25672
+      targetPort: dist
+    - name: http-stats
+      protocol: TCP
+      port: 15672
+      targetPort: stats
+    - name: metrics
+      protocol: TCP
+      port: 9419
+      targetPort: metrics
+  selector:
+      app: old-rabbitmq
+      version: 0.0.1
+  type: ClusterIP

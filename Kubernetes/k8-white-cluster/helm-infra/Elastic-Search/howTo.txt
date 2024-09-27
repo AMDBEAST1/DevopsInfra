@@ -1,0 +1,6 @@
+helm repo add elastic https://helm.elastic.co
+helm install --name elasticsearch stable/elasticsearch --namespace=logging -f /root/es-values.YAML
+helm search repo elastic/elasticsearch 
+
+helm upgrade elastic elastic/elasticsearch -f values.yaml -n monitoring --debug --install --version 7.17.3
+helm show values elastic/elasticsearch --version 7.17.3 > values.yaml 

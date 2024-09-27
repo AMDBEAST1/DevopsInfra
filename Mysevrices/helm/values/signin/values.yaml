@@ -1,0 +1,112 @@
+deploymentname: signin
+volumes:
+  - name: config
+    configMap:
+      name: signin
+      defaultMode: 420
+  - name: oracle
+    configMap:
+      name: tnsnames
+      defaultMode: 420
+image:
+  repository: 10.1.10.86:5000
+  tag: build4testing:s9860-core.signin-127339-develop
+  
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: FCGI
+    nginx.ingress.kubernetes.io/ssl-redirect: 'false'
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: dev.testnew.egopay.ru
+      paths:
+        - path: /auth
+          pathType: Prefix
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+configmaptns:
+  enabled: false
+  data: 
+    circus.conf: ''
+    tnsnames.ora: |
+      main =
+         (DESCRIPTION =
+           (ADDRESS = (PROTOCOL = TCP)(HOST = 10.1.10.199)(PORT = 1521))
+           (CONNECT_DATA =
+             (SERVICE_NAME = epaytest.egopay.ru)
+           )
+          )
+
+      refund =
+         (DESCRIPTION =
+            (ADDRESS = (PROTOCOL = TCP)(HOST = vv-edudb-01.sirena-travel.ru)(PORT = 1521))
+           (CONNECT_DATA =
+            (SERVER = DEDICATED)
+            (SERVICE_NAME = edu)
+           )
+         )
+configmap:
+  enabled: true
+  data:
+    appt.ini: |
+      [main]
+      sets_connect = oracle://user=c_signin password=nJQnWsdSEb60 service=main
+      logger = dest=udp addr=10.1.100.182:514 facility=0 filter=[+A]
+      [db]
+      op_timeout = 2000
+
+    circus.conf: |
+      [circus]
+      [env]
+      PYTHONPATH=/usr/local/lib/python3.9/site-packages
+      LANG=ru_RU.UTF-8
+      TNS_ADMIN=/oracle/
+      LD_LIBRARY_PATH=/usr/lib/oracle/19.11/client/lib
+      NLS_LANG=AMERICAN.UTF8
+      [watcher:signin]
+      cmd = /home/www-data/bin/signin -c /config/appt.ini --fd $(circus.sockets.signin)
+      numprocesses = 1
+      use_sockets = True
+      stdout_stream.class = StdoutStream
+      stderr_stream.class = StdoutStream
+      [socket:signin]
+      host = 0.0.0.0
+      port = 80
+
+command:
+  - /usr/local/bin/circusd
+args:
+  - /config/circus.conf
+env:
+  - name: TNS_ADMIN
+    value: /oracle/
+  - name: LD_LIBRARY_PATH
+    value: /usr/lib/oracle/12.1/client/lib
+
+
+
+
+volumeMounts:
+  - name: oracle
+    mountPath: /oracle
+  - name: config
+    mountPath: /config
+strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+
+
+resources:
+  limits:
+    cpu: 300m
+    memory: 512Mi
+  requests:
+    cpu: 300m
+    memory: 500Mi

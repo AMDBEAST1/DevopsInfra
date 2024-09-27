@@ -1,0 +1,5 @@
+helm repo add elastic https://helm.elastic.co
+helm search repo stable/kibana
+
+helm upgrade kibana kibana -f values.yaml -n monitoring --debug --install --version 7.3.2
+helm show values stable/kibana  > values.yaml

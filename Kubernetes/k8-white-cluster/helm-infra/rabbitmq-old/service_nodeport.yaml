@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: egopay-dev
+  name: old-rabbitmq-node-port
+spec:
+  ports:
+    - name: manage
+      protocol: TCP
+      port: 15672
+      targetPort: 15672
+      nodePort: 31941
+    - name: amqp
+      protocol: TCP
+      port: 5672
+      targetPort: 5672
+      nodePort: 31254
+  selector:
+      app: old-rabbitmq
+      version: 0.0.1
+  type: NodePort
